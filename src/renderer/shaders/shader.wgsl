@@ -42,5 +42,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let coords = vec2i(in.tex_coords * vec2f(texture_dimensions));
     let palette_index = textureLoad(t_palette_index, coords, 0).r;
 
+    if palette_index > 255 {
+        return vec4f(1.0, 1.0, 1.0, 0.0);
+    }
+
     return textureLoad(t_palette, palette_index, 0);
 }

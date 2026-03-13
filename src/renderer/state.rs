@@ -2,7 +2,7 @@ use std::sync::Arc;
 use wgpu::{include_wgsl, util::DeviceExt};
 use winit::window::Window;
 
-use crate::renderer::{load_binary, pipeline::create_render_pipeline, texture};
+use crate::{renderer::{load_binary, pipeline::create_render_pipeline, texture}, wad::patch::Patch};
 
 pub struct RenderState {
     window: Arc<Window>,
@@ -104,9 +104,7 @@ impl RenderState {
 
         let texture = texture::PalettizedTexture::new(
             "Title",
-            texture::parse_picture(&load_binary("TITLEPIC.lmp")),
-            320,
-            200,
+            Patch::new(&load_binary("TITLEPIC.lmp")),
             &device,
             &queue,
         );
@@ -153,12 +151,7 @@ impl RenderState {
                 depth_slice: None,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.1,
-                        g: 0.2,
-                        b: 0.3,
-                        a: 1.0,
-                    }),
+                    load: wgpu::LoadOp::Clear(wgpu::Color { r: 0.1, g: 0.2, b: 0.3, a: 1.0 }),
                     store: wgpu::StoreOp::Store,
                 },
             })],
@@ -185,5 +178,14 @@ impl RenderState {
 
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
+    }
+
+    pub fn resize(&mut self, width: u32, height: u32) {
+        let mut config = self.surface.get_configuration().expect("Failed to get current surface config");
+        config.width = width;
+        config.height = height;
+        self.surface.configure(&self.device, &config);
+
+        self.depth_texture = texture::DepthTexture::new(&self.device, width, height);
     }
 }
