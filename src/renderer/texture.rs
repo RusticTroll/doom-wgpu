@@ -224,7 +224,7 @@ fn parse_column(lump: &[u8], offset: usize, height: u16) -> Vec<u8> {
         let post_length = lump[offset] as usize;
         offset += 2;
 
-        for (pixel_offset, index) in lump[offset..offset + (post_length - 1)].iter().enumerate() {
+        for (pixel_offset, index) in lump[offset..offset + post_length].iter().enumerate() {
             indices[top_delta as usize + pixel_offset] = *index;
         }
 

@@ -52,7 +52,7 @@ impl ApplicationHandler<State> for App {
                 .expect("Failed to create window"),
         );
 
-        let _ = window.request_inner_size(PhysicalSize::new(320, 200));
+        let _ = window.request_inner_size(PhysicalSize::new(960, 600));
 
         self.state = Some(pollster::block_on(State::new(window)));
     }
