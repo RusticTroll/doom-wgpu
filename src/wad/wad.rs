@@ -11,6 +11,7 @@ struct LumpInfo {
 
 #[derive(Debug)]
 pub enum Lump {
+    ColorMap(Vec<[u8; 256]>),
     Palette(Vec<[[u8; 3]; 256]>),
     Patch(Patch),
     Unknown,
@@ -60,11 +61,27 @@ impl Wad {
             _ => panic!("PLAYPAL lump is not a palette"),
         }
     }
+
+    pub fn get_colormap(&self) -> Vec<[u8; 256]> {
+        let colormap_lump_index = self
+            .lump_names
+            .iter()
+            .position(|x| x == "COLORMAP")
+            .expect("No PLAYPAL lump found");
+        match &self.lumps[colormap_lump_index] {
+            Lump::ColorMap(map) => map.clone(),
+            _ => panic!("COLORMAP lump is not a color map"),
+        }
+    }
 }
 
 fn parse_lump(file: &Vec<u8>, info: &LumpInfo) -> Lump {
     if info.name == *b"PLAYPAL\0" {
         return read_palette(file, info.file_position as usize);
+    }
+
+    if info.name == *b"COLORMAP" {
+        return read_colormap(file, info.file_position as usize);
     }
 
     Lump::Unknown
@@ -76,4 +93,12 @@ fn read_palette(file: &Vec<u8>, offset: usize) -> Lump {
     let palette_slice: &[[[u8; 3]; 256]] =
         bytemuck::cast_slice(&file[offset..offset + PALETTE_SIZE]);
     Lump::Palette(palette_slice.to_vec())
+}
+
+const COLORMAP_SIZE: usize = std::mem::size_of::<[[u8; 256]; 34]>();
+
+fn read_colormap(file: &Vec<u8>, offset: usize) -> Lump {
+    let colormap_slice: &[[u8; 256]] =
+        bytemuck::cast_slice(&file[offset..offset + COLORMAP_SIZE]);
+    Lump::ColorMap(colormap_slice.to_vec())
 }

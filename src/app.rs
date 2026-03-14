@@ -15,7 +15,7 @@ impl State {
         let wad = wad::Wad::load(&wad_name);
 
         Self {
-            render_state: renderer::RenderState::new(window, wad.get_palette()).await,
+            render_state: renderer::RenderState::new(window, &wad).await,
             wad,
         }
     }

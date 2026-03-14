@@ -36,6 +36,10 @@ var t_palette: texture_1d<f32>;
 @group(1) @binding(0)
 var t_palette_index: texture_2d<u32>;
 
+@group(2) @binding(0)
+var t_color_map: texture_2d<u32>;
+var<immediate> color_map_index: u32;
+
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4f {
     let texture_dimensions = textureDimensions(t_palette_index);
@@ -46,5 +50,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4f {
         return vec4f(1.0, 1.0, 1.0, 0.0);
     }
 
-    return textureLoad(t_palette, palette_index, 0);
+    let mapped_index = textureLoad(t_color_map, vec2(palette_index, color_map_index), 0).r;
+
+    return textureLoad(t_palette, mapped_index, 0);
 }
