@@ -1,4 +1,4 @@
-use crate::renderer;
+use crate::{renderer, wad};
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler, dpi::PhysicalSize, event::WindowEvent,
@@ -7,23 +7,16 @@ use winit::{
 
 pub struct State {
     render_state: renderer::RenderState,
+    wad: wad::Wad,
 }
 
 impl State {
-    pub async fn new(window: Arc<Window>) -> Self {
-        let palette_bytes = include_bytes!("doom.pal");
-        let mut alpha_bytes = Vec::with_capacity((palette_bytes.len() / 3) * 4);
-        for chunk in palette_bytes.chunks(3) {
-            alpha_bytes.extend_from_slice(chunk);
-            alpha_bytes.push(255);
-        }
+    pub async fn new(window: Arc<Window>, wad_name: &String) -> Self {
+        let wad = wad::Wad::load(&wad_name);
 
         Self {
-            render_state: renderer::RenderState::new(
-                window,
-                vec![*bytemuck::from_bytes(&alpha_bytes[..])],
-            )
-            .await,
+            render_state: renderer::RenderState::new(window, wad.get_palette()).await,
+            wad,
         }
     }
 
@@ -37,12 +30,16 @@ impl State {
 }
 
 pub struct App {
+    wad_name: String,
     state: Option<State>,
 }
 
 impl App {
-    pub fn new() -> Self {
-        Self { state: None }
+    pub fn new(wad_name: &str) -> Self {
+        Self {
+            wad_name: wad_name.to_string(),
+            state: None,
+        }
     }
 }
 
@@ -58,7 +55,7 @@ impl ApplicationHandler<State> for App {
 
         let _ = window.request_inner_size(PhysicalSize::new(960, 600));
 
-        self.state = Some(pollster::block_on(State::new(window)));
+        self.state = Some(pollster::block_on(State::new(window, &self.wad_name)));
     }
 
     #[allow(unused_mut)]
@@ -81,7 +78,7 @@ impl ApplicationHandler<State> for App {
             WindowEvent::CloseRequested => event_loop.exit(),
             WindowEvent::Resized(size) => {
                 state.resize(size.width, size.height);
-            }
+            },
             WindowEvent::RedrawRequested => {
                 state.render();
             },

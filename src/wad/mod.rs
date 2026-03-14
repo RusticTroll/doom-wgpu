@@ -1,2 +1,5 @@
-pub mod patch;
-pub mod wad;
+mod patch;
+mod wad;
+
+pub use patch::*;
+pub use wad::*;

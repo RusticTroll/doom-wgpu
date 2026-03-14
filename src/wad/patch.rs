@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Patch {
     pub width: u32,
     pub height: u32,

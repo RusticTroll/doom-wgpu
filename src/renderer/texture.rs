@@ -1,5 +1,5 @@
+use crate::wad::Patch;
 use std::sync::OnceLock;
-use crate::wad::patch::Patch;
 
 pub const PALETTE_BIND_GROUP_LAYOUT_DESC: wgpu::BindGroupLayoutDescriptor =
     wgpu::BindGroupLayoutDescriptor {
@@ -18,7 +18,7 @@ pub const PALETTE_BIND_GROUP_LAYOUT_DESC: wgpu::BindGroupLayoutDescriptor =
 pub static PALETTE_BIND_GROUP_LAYOUT: OnceLock<wgpu::BindGroupLayout> = OnceLock::new();
 
 pub struct Palette {
-    palettes: Vec<[[u8; 4]; 256]>,
+    palettes: Vec<[[u8; 3]; 256]>,
     texture: wgpu::Texture,
     view: wgpu::TextureView,
     pub bind_group: wgpu::BindGroup,
@@ -31,7 +31,7 @@ const PALETTE_SIZE: wgpu::Extent3d = wgpu::Extent3d {
 };
 
 impl Palette {
-    pub fn new(palettes: Vec<[[u8; 4]; 256]>, device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
+    pub fn new(palettes: Vec<[[u8; 3]; 256]>, device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
         let texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Palette Texture"),
             size: PALETTE_SIZE,
@@ -50,7 +50,7 @@ impl Palette {
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            bytemuck::cast_slice(&palettes[0]),
+            &rgb_to_rgba(bytemuck::cast_slice(&palettes[0])),
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * 256),
@@ -87,7 +87,7 @@ impl Palette {
                 origin: wgpu::Origin3d::ZERO,
                 aspect: wgpu::TextureAspect::All,
             },
-            bytemuck::cast_slice(&self.palettes[index]),
+            &rgb_to_rgba(bytemuck::cast_slice(&self.palettes[index])),
             wgpu::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(4 * 256),
@@ -96,6 +96,22 @@ impl Palette {
             PALETTE_SIZE,
         );
     }
+}
+
+fn rgb_to_rgba(rgb_bytes: &[u8]) -> Vec<u8> {
+    // The RGBA buffer will be 4/3 the size of the RGB buffer.
+    let mut rgba_bytes = Vec::with_capacity(rgb_bytes.len() * 4 / 3);
+
+    for chunk in rgb_bytes.chunks_exact(3) {
+        // Push the Red, Green, and Blue bytes.
+        rgba_bytes.push(chunk[0]); // Red
+        rgba_bytes.push(chunk[1]); // Green
+        rgba_bytes.push(chunk[2]); // Blue
+        // Push the Alpha channel as opaque (255).
+        rgba_bytes.push(255); // Alpha
+    }
+
+    rgba_bytes
 }
 
 pub const PALETTE_INDEX_BIND_GROUP_LAYOUT_DESC: wgpu::BindGroupLayoutDescriptor =
@@ -121,12 +137,7 @@ pub struct PalettizedTexture {
 }
 
 impl PalettizedTexture {
-    pub fn new(
-        name: &str,
-        patch: Patch,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-    ) -> Self {
+    pub fn new(name: &str, patch: Patch, device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
         let size = wgpu::Extent3d {
             width: patch.width,
             height: patch.height,
