@@ -17,7 +17,6 @@ pub struct RenderState {
     primary_pipeline: wgpu::RenderPipeline,
     depth_texture: texture::DepthTexture,
     palette: texture::Palette,
-    color_map: texture::ColorMap,
     textures: Vec<texture::PalettizedTexture>,
     index_buffer: wgpu::Buffer,
 }
@@ -49,7 +48,7 @@ impl RenderState {
                 label: None,
                 required_features: wgpu::Features::IMMEDIATES,
                 required_limits: wgpu::Limits {
-                    max_immediate_size: 4,
+                    max_immediate_size: 256,
                     ..Default::default()
                 },
                 experimental_features: wgpu::ExperimentalFeatures::disabled(),
@@ -91,13 +90,8 @@ impl RenderState {
                             &texture::PALETTE_INDEX_BIND_GROUP_LAYOUT_DESC,
                         )
                     }),
-                    &texture::COLORMAP_BIND_GROUP_LAYOUT.get_or_init(|| {
-                        device.create_bind_group_layout(
-                            &texture::COLORMAP_BIND_GROUP_LAYOUT_DESC,
-                        )
-                    }),
                 ],
-                immediate_size: 4,
+                immediate_size: 8,
             });
 
         let primary_pipeline = create_render_pipeline(
@@ -112,9 +106,7 @@ impl RenderState {
 
         let depth_texture = texture::DepthTexture::new(&device, size.width, size.height);
 
-        let palette = texture::Palette::new(wad.get_palette(), &device, &queue);
-
-        let color_map = texture::ColorMap::new(wad.get_colormap(), &device, &queue);
+        let palette = texture::Palette::new(wad.get_palette(), wad.get_colormap(), &device, &queue);
 
         let texture = texture::PalettizedTexture::new(
             "Title",
@@ -139,7 +131,6 @@ impl RenderState {
             primary_pipeline,
             depth_texture,
             palette,
-            color_map,
             textures: vec![texture],
             index_buffer,
         }
@@ -191,8 +182,8 @@ impl RenderState {
         render_pass.set_pipeline(&self.primary_pipeline);
         render_pass.set_bind_group(0, &self.palette.bind_group, &[]);
         render_pass.set_bind_group(1, &self.textures[0].bind_group, &[]);
-        render_pass.set_bind_group(2, &self.color_map.bind_group, &[]);
         render_pass.set_immediates(0, &[0u8; 4]);
+        render_pass.set_immediates(4, &[0u8; 4]);
         render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint32);
         render_pass.draw_indexed(0..6, 0, 0..1);
 
