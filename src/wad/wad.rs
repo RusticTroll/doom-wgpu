@@ -1,3 +1,4 @@
+use crate::wad::Demo;
 use super::patch::Patch;
 use bytemuck::{Pod, Zeroable};
 
@@ -12,6 +13,7 @@ struct LumpInfo {
 #[derive(Debug)]
 pub enum Lump {
     ColorMap(Vec<[u8; 256]>),
+    Demo(Demo),
     Palette(Vec<[[u8; 3]; 256]>),
     Patch(Patch),
     Unknown,
@@ -76,29 +78,32 @@ impl Wad {
 }
 
 fn parse_lump(file: &Vec<u8>, info: &LumpInfo) -> Lump {
+    let file_position = info.file_position as usize;
+    let data = &file[file_position..file_position + info.size as usize];
+
     if info.name == *b"PLAYPAL\0" {
-        return read_palette(file, info.file_position as usize);
+        return read_palette(data);
     }
 
     if info.name == *b"COLORMAP" {
-        return read_colormap(file, info.file_position as usize);
+        return read_colormap(data);
+    }
+
+    if info.name.starts_with(b"DEMO") {
+        return Lump::Demo(Demo::new(data))
     }
 
     Lump::Unknown
 }
 
-const PALETTE_SIZE: usize = std::mem::size_of::<[[[u8; 3]; 256]; 14]>();
-
-fn read_palette(file: &Vec<u8>, offset: usize) -> Lump {
+fn read_palette(data: &[u8]) -> Lump {
     let palette_slice: &[[[u8; 3]; 256]] =
-        bytemuck::cast_slice(&file[offset..offset + PALETTE_SIZE]);
+        bytemuck::cast_slice(&data);
     Lump::Palette(palette_slice.to_vec())
 }
 
-const COLORMAP_SIZE: usize = std::mem::size_of::<[[u8; 256]; 34]>();
-
-fn read_colormap(file: &Vec<u8>, offset: usize) -> Lump {
+fn read_colormap(data: &[u8]) -> Lump {
     let colormap_slice: &[[u8; 256]] =
-        bytemuck::cast_slice(&file[offset..offset + COLORMAP_SIZE]);
+        bytemuck::cast_slice(&data);
     Lump::ColorMap(colormap_slice.to_vec())
 }
