@@ -1,4 +1,4 @@
-use crate::wad::Demo;
+use crate::wad::{Demo, Sound};
 use super::patch::Patch;
 use bytemuck::{Pod, Zeroable};
 
@@ -16,6 +16,7 @@ pub enum Lump {
     Demo(Demo),
     Palette(Vec<[[u8; 3]; 256]>),
     Patch(Patch),
+    Sound(Sound),
     Ignored,
     Unknown,
 }
@@ -101,7 +102,11 @@ fn parse_lump(file: &Vec<u8>, info: &LumpInfo) -> Lump {
     }
 
     if info.name.starts_with(b"DEMO") {
-        return Lump::Demo(Demo::new(data))
+        return Lump::Demo(Demo::new(data));
+    }
+
+    if info.name.starts_with(b"DS") {
+        return Lump::Sound(Sound::new(data));
     }
 
     Lump::Unknown
