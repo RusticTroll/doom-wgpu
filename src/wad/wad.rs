@@ -1,5 +1,5 @@
-use crate::wad::{Demo, Sound};
 use super::patch::Patch;
+use crate::wad::{Demo, Sound, sound};
 use bytemuck::{Pod, Zeroable};
 
 #[repr(C)]
@@ -77,13 +77,25 @@ impl Wad {
             _ => panic!("COLORMAP lump is not a color map"),
         }
     }
+
+    pub fn play_sound(&self, name: &str) {
+        let sound_lump_index = self
+            .lump_names
+            .iter()
+            .position(|x| x == name)
+            .expect(&format!("Failed to find sound lump {}", name));
+        match &self.lumps[sound_lump_index] {
+            Lump::Sound(sound) => sound.play(),
+            other => panic!(
+                "Lump {} was expected to be a sound but is a {}",
+                name,
+                std::any::type_name_of_val(other)
+            ),
+        }
+    }
 }
 
-const IGNORED_LUMPS: &[[u8; 8]] = &[
-    *b"ENDOOM\0\0",
-    *b"DMXGUS\0\0",
-    *b"GENMIDI\0",
-];
+const IGNORED_LUMPS: &[[u8; 8]] = &[*b"ENDOOM\0\0", *b"DMXGUS\0\0", *b"GENMIDI\0"];
 
 fn parse_lump(file: &Vec<u8>, info: &LumpInfo) -> Lump {
     if IGNORED_LUMPS.contains(&info.name) {
@@ -113,13 +125,11 @@ fn parse_lump(file: &Vec<u8>, info: &LumpInfo) -> Lump {
 }
 
 fn read_palette(data: &[u8]) -> Lump {
-    let palette_slice: &[[[u8; 3]; 256]] =
-        bytemuck::cast_slice(&data);
+    let palette_slice: &[[[u8; 3]; 256]] = bytemuck::cast_slice(&data);
     Lump::Palette(palette_slice.to_vec())
 }
 
 fn read_colormap(data: &[u8]) -> Lump {
-    let colormap_slice: &[[u8; 256]] =
-        bytemuck::cast_slice(&data);
+    let colormap_slice: &[[u8; 256]] = bytemuck::cast_slice(&data);
     Lump::ColorMap(colormap_slice.to_vec())
 }

@@ -3,26 +3,28 @@ use std::sync::OnceLock;
 pub const PALETTE_BIND_GROUP_LAYOUT_DESC: wgpu::BindGroupLayoutDescriptor =
     wgpu::BindGroupLayoutDescriptor {
         label: Some("Palette Layout"),
-        entries: &[wgpu::BindGroupLayoutEntry {
-            binding: 0,
-            visibility: wgpu::ShaderStages::FRAGMENT,
-            ty: wgpu::BindingType::Texture {
-                sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                view_dimension: wgpu::TextureViewDimension::D2,
-                multisampled: false,
+        entries: &[
+            wgpu::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Texture {
+                    sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                    view_dimension: wgpu::TextureViewDimension::D2,
+                    multisampled: false,
+                },
+                count: None,
             },
-            count: None,
-        },
-        wgpu::BindGroupLayoutEntry {
-            binding: 1,
-            visibility: wgpu::ShaderStages::FRAGMENT,
-            ty: wgpu::BindingType::Texture {
-                sample_type: wgpu::TextureSampleType::Uint,
-                view_dimension: wgpu::TextureViewDimension::D2,
-                multisampled: false,
+            wgpu::BindGroupLayoutEntry {
+                binding: 1,
+                visibility: wgpu::ShaderStages::FRAGMENT,
+                ty: wgpu::BindingType::Texture {
+                    sample_type: wgpu::TextureSampleType::Uint,
+                    view_dimension: wgpu::TextureViewDimension::D2,
+                    multisampled: false,
+                },
+                count: None,
             },
-            count: None,
-        }],
+        ],
     };
 pub static PALETTE_BIND_GROUP_LAYOUT: OnceLock<wgpu::BindGroupLayout> = OnceLock::new();
 
@@ -47,7 +49,12 @@ const COLORMAP_SIZE: wgpu::Extent3d = wgpu::Extent3d {
 };
 
 impl Palette {
-    pub fn new(palettes: Vec<[[u8; 3]; 256]>, color_maps: Vec<[u8; 256]>, device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
+    pub fn new(
+        palettes: Vec<[[u8; 3]; 256]>,
+        color_maps: Vec<[u8; 256]>,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+    ) -> Self {
         let palette_texture = device.create_texture(&wgpu::TextureDescriptor {
             label: Some("Palette Texture"),
             size: PALETTE_SIZE,
@@ -110,14 +117,16 @@ impl Palette {
             label: Some("Palette Bind Group"),
             layout: PALETTE_BIND_GROUP_LAYOUT
                 .get_or_init(|| device.create_bind_group_layout(&PALETTE_BIND_GROUP_LAYOUT_DESC)),
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::TextureView(&palette_view),
-            },
-            wgpu::BindGroupEntry {
-                binding: 1,
-                resource: wgpu::BindingResource::TextureView(&color_map_view),
-            }],
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&palette_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::TextureView(&color_map_view),
+                },
+            ],
         });
 
         Self {

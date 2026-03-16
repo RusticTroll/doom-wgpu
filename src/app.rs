@@ -14,6 +14,8 @@ impl State {
     pub async fn new(window: Arc<Window>, wad_name: &String) -> Self {
         let wad = wad::Wad::load(&wad_name);
 
+        wad.play_sound("DSPISTOL");
+
         Self {
             render_state: renderer::RenderState::new(window, &wad).await,
             wad,

@@ -30,7 +30,7 @@ pub struct DemoTic {
 #[derive(Clone, Debug)]
 pub struct Demo {
     header: DemoHeader,
-    tics: Vec<DemoTic>
+    tics: Vec<DemoTic>,
 }
 
 const DEMO_HEADER_SIZE: usize = std::mem::size_of::<DemoHeader>();
@@ -38,11 +38,9 @@ const DEMO_HEADER_SIZE: usize = std::mem::size_of::<DemoHeader>();
 impl Demo {
     pub fn new(lump: &[u8]) -> Self {
         let header: DemoHeader = *bytemuck::from_bytes(&lump[..DEMO_HEADER_SIZE]);
-        let tics: Vec<DemoTic> = bytemuck::cast_slice(&lump[DEMO_HEADER_SIZE..lump.len() - 1]).to_vec();
+        let tics: Vec<DemoTic> =
+            bytemuck::cast_slice(&lump[DEMO_HEADER_SIZE..lump.len() - 1]).to_vec();
 
-        Self {
-            header,
-            tics
-        }
+        Self { header, tics }
     }
 }
