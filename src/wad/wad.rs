@@ -16,6 +16,7 @@ pub enum Lump {
     Demo(Demo),
     Palette(Vec<[[u8; 3]; 256]>),
     Patch(Patch),
+    Ignored,
     Unknown,
 }
 
@@ -77,7 +78,17 @@ impl Wad {
     }
 }
 
+const IGNORED_LUMPS: &[[u8; 8]] = &[
+    *b"ENDOOM\0\0",
+    *b"DMXGUS\0\0",
+    *b"GENMIDI\0",
+];
+
 fn parse_lump(file: &Vec<u8>, info: &LumpInfo) -> Lump {
+    if IGNORED_LUMPS.contains(&info.name) {
+        return Lump::Ignored;
+    }
+
     let file_position = info.file_position as usize;
     let data = &file[file_position..file_position + info.size as usize];
 
