@@ -6,13 +6,13 @@ pub struct Sound {
 
 impl Sound {
     pub fn new(lump: &[u8]) -> Self {
-        let format: u16 = bytemuck::try_pod_read_unaligned(&lump[0..2]).expect("Failed to read sound format");
+        let format: u16 = *bytemuck::from_bytes(&lump[0..2]);
         if format != 3 {
             panic!("Sound lump is format {}, expected format 3", format);
         }
 
-        let sample_rate =  bytemuck::try_pod_read_unaligned(&lump[2..4]).expect("Failed to read sound format");
-        let sample_count = bytemuck::try_pod_read_unaligned::<u32>(&lump[4..8]).expect("Failed to read sound format") - 32;
+        let sample_rate =  *bytemuck::from_bytes(&lump[2..4]);
+        let sample_count = bytemuck::from_bytes::<u32>(&lump[4..8]) - 32;
 
         Self {
             sample_rate,

@@ -91,7 +91,7 @@ fn parse_lump(file: &Vec<u8>, info: &LumpInfo) -> Lump {
     }
 
     let file_position = info.file_position as usize;
-    let data = &file[file_position..file_position + info.size as usize];
+    let data = &file[file_position..file_position + info.size as usize].to_vec();
 
     if info.name == *b"PLAYPAL\0" {
         return read_palette(data);
