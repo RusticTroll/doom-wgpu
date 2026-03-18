@@ -1,4 +1,4 @@
-use crate::{renderer, wad};
+use crate::{audio, renderer, wad};
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler, dpi::PhysicalSize, event::WindowEvent,
@@ -6,6 +6,7 @@ use winit::{
 };
 
 pub struct State {
+    audio_manager: audio::AudioManager,
     render_state: renderer::RenderState,
     wad: wad::Wad,
 }
@@ -14,9 +15,10 @@ impl State {
     pub async fn new(window: Arc<Window>, wad_name: &String) -> Self {
         let wad = wad::Wad::load(&wad_name);
 
-        wad.play_sound("DSPISTOL");
+        let audio_manager = audio::AudioManager::new();
 
         Self {
+            audio_manager,
             render_state: renderer::RenderState::new(window, &wad).await,
             wad,
         }

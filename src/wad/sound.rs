@@ -1,15 +1,9 @@
 use rodio::buffer::SamplesBuffer;
-use std::{num::NonZero, sync::OnceLock};
+use std::num::NonZero;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Sound {
-    sample_buffer: SamplesBuffer,
-}
-
-static SOUND_MIXER: OnceLock<rodio::MixerDeviceSink> = OnceLock::new();
-
-fn init_mixer() -> rodio::MixerDeviceSink {
-    rodio::DeviceSinkBuilder::open_default_sink().expect("Failed to open audio sink")
+    pub sample_buffer: SamplesBuffer,
 }
 
 impl Sound {
@@ -35,10 +29,5 @@ impl Sound {
                 samples,
             ),
         }
-    }
-
-    pub fn play(&self) {
-        let mixer = SOUND_MIXER.get_or_init(init_mixer);
-        mixer.mixer().add(self.sample_buffer.clone());
     }
 }

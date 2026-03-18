@@ -79,14 +79,14 @@ impl Wad {
         }
     }
 
-    pub fn play_sound(&self, name: &str) {
+    pub fn get_sound(&self, name: &str) -> Sound {
         let sound_lump_index = self
             .lump_names
             .iter()
             .position(|x| x == name)
             .expect(&format!("Failed to find sound lump {}", name));
         match &self.lumps[sound_lump_index] {
-            Lump::Sound(sound) => sound.play(),
+            Lump::Sound(sound) => sound.clone(),
             other => panic!(
                 "Lump {} was expected to be a sound but is a {}",
                 name,
