@@ -1,6 +1,6 @@
 use rodio::{mixer::*, *};
 
-use crate::wad::Sound;
+use crate::wad::{Music, Sound};
 
 pub struct AudioManager {
     sink: MixerDeviceSink,
@@ -23,7 +23,11 @@ impl AudioManager {
         }
     }
 
-    pub fn repeat_forever(&self, sound: Sound) {
+    pub fn play_music(&self, music: &Music) {
+        self.music_player.append(music.sample_buffer.clone());
+    }
+
+    pub fn repeat_forever(&self, sound: &Sound) {
         match &self.sound_mixer {
             Some(mixer) => mixer.add(sound.sample_buffer.clone().repeat_infinite()),
             _ => {},

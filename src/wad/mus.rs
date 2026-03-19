@@ -4,6 +4,7 @@ use bytemuck::{Pod, Zeroable};
 use rodio::{buffer::SamplesBuffer, nz};
 use rustysynth::*;
 
+#[derive(Debug)]
 pub struct Music {
     pub sample_buffer: SamplesBuffer,
 }
@@ -45,8 +46,8 @@ impl Music {
             // Parse events until we get a delay
             // Once we reach a delay, render the waveform for `delay` ticks worth of samples
             if let Some(delay) = parse_mus_event(&mut synth, &mut last_velocity, &mut events) {
-                let mut left_samples_for_tick = Vec::with_capacity(SAMPLES_PER_TICK * delay);
-                let mut right_samples_for_tick = Vec::with_capacity(SAMPLES_PER_TICK * delay);
+                let mut left_samples_for_tick = vec![0_f32; (SAMPLES_PER_TICK * delay)];
+                let mut right_samples_for_tick = vec![0_f32; (SAMPLES_PER_TICK * delay)];
                 synth.render(&mut left_samples_for_tick, &mut right_samples_for_tick);
 
                 left_samples.append(&mut left_samples_for_tick);
@@ -55,7 +56,7 @@ impl Music {
         }
 
         Self {
-            sample_buffer: SamplesBuffer::new(nz!(2), nz!(44100), left_samples),
+            sample_buffer: SamplesBuffer::new(nz!(1), nz!(44100), left_samples),
         }
     }
 }
@@ -76,6 +77,11 @@ pub fn parse_mus_event(
     let event_type = (event_head & 0x70) >> 4;
     let channel = (event_head & 0x0F) as i32;
 
+    // println!(
+    //     "Event head: {:#X}\n\tDelay: {}\n\tType: {}\n\tChannel: {}",
+    //     *event_head, delay_present, event_type, channel
+    // );
+
     match event_type {
         // Release Note
         0 => {
@@ -89,7 +95,7 @@ pub fn parse_mus_event(
             let event = bytes
                 .pop_front()
                 .expect("Tried to parse Play Note event, but there were no bytes left");
-            if event & 0x80 != 0 {
+            if event & 0x80 == 0 {
                 synth.note_on(
                     channel,
                     (event & 0x7F) as i32,
@@ -111,15 +117,15 @@ pub fn parse_mus_event(
             synth.process_midi_message(
                 channel,
                 0xE0,
-                (bend_amount >> 1) as i32,
                 (bend_amount << 7) as i32,
+                (bend_amount >> 1) as i32,
             );
         },
         // System Event
         3 => {
             let event_id = bytes
                 .pop_front()
-                .expect("Tried to parse Play Note event, but there were no bytes left");
+                .expect("Tried to parse System event, but there were no bytes left");
             match event_id {
                 // All Sounds Off
                 10 => synth.process_midi_message(channel, 0xB0, 120, 0),
@@ -131,7 +137,7 @@ pub fn parse_mus_event(
                 13 => synth.process_midi_message(channel, 0xB0, 127, 0),
                 // Reset all controllers
                 14 => synth.process_midi_message(channel, 0xB0, 121, 0),
-                _ => panic!("MUS System Event ID {} is invalid", event_id),
+                _ => {},
             }
         },
         // Controller
@@ -165,28 +171,35 @@ pub fn parse_mus_event(
                 8 => synth.process_midi_message(channel, 0xB0, 64, value),
                 // Soft Pedal
                 9 => synth.process_midi_message(channel, 0xB0, 67, value),
-                _ => panic!("MUS Controller number {} is invalid", controller_number),
+                _ => {},
             }
         },
-        5 => {},
-        6 => {},
-        7 => {},
+        5 => {
+            println!("5")
+        },
+        6 => {
+            println!("6")
+        },
+        7 => {
+            println!("7")
+        },
         other => panic!("Invalid MUS event type {}", other),
     };
 
     if delay_present {
-        let mut delay = *bytes
-            .pop_front()
-            .expect("Tried to parse delay, but there were no bytes left");
-        let mut total_delay: usize = (delay & 0x7F) as usize;
+        let mut total_delay: usize = 0;
 
-        while delay & 0x80 == 1 {
-            total_delay *= 128;
-            delay = *bytes
+        loop {
+            let delay = *bytes
                 .pop_front()
                 .expect("Tried to parse delay, but there were no bytes left");
-            total_delay += (delay & 0x7F) as usize;
+            total_delay = total_delay * 128 + (delay & 0x7F) as usize;
+            if delay & 0x80 == 0 {
+                break;
+            }
         }
+
+        //println!("Current Delay: {}", total_delay);
 
         Some(total_delay)
     } else {

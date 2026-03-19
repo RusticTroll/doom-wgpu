@@ -1,5 +1,5 @@
 use super::patch::Patch;
-use crate::wad::{Demo, Sound};
+use crate::wad::{Demo, Music, Sound};
 use bytemuck::{Pod, Zeroable};
 
 #[repr(C)]
@@ -14,6 +14,7 @@ struct LumpInfo {
 pub enum Lump {
     ColorMap(Vec<[u8; 256]>),
     Demo(Demo),
+    Music(Music),
     Palette(Vec<[[u8; 3]; 256]>),
     Patch(Patch),
     Sound(Sound),
@@ -83,12 +84,28 @@ impl Wad {
         let sound_lump_index = self
             .lump_names
             .iter()
-            .position(|x| x == name)
+            .position(|x| x.starts_with(name))
             .expect(&format!("Failed to find sound lump {}", name));
         match &self.lumps[sound_lump_index] {
             Lump::Sound(sound) => sound.clone(),
             other => panic!(
                 "Lump {} was expected to be a sound but is a {}",
+                name,
+                std::any::type_name_of_val(other)
+            ),
+        }
+    }
+
+    pub fn get_music(&self, name: &str) -> &Music {
+        let music_lump_index = self
+            .lump_names
+            .iter()
+            .position(|x| x.starts_with(name))
+            .expect(&format!("Failed to find music lump {}", name));
+        match &self.lumps[music_lump_index] {
+            Lump::Music(music) => music,
+            other => panic!(
+                "Lump {} was expected to be a music but is a {}",
                 name,
                 std::any::type_name_of_val(other)
             ),
@@ -124,6 +141,11 @@ fn parse_lump(file: &Vec<u8>, info: &LumpInfo) -> Lump {
 
     if info.name.starts_with(b"DP") {
         return Lump::SoundPCSpeaker;
+    }
+
+    if info.name.starts_with(b"D_") {
+        println!("Parsing {}", String::from_utf8(info.name.to_vec()).unwrap());
+        return Lump::Music(Music::new(data));
     }
 
     Lump::Unknown
