@@ -46,10 +46,12 @@ impl Wad {
         let mut lumps = Vec::with_capacity(num_lumps as usize);
 
         for info in all_lump_info {
-            lump_names.push(
-                String::from_utf8(info.name.to_vec())
-                    .expect(&format!("Failed to get name for lump {:?}", info)),
-            );
+            let lump_name = String::from_utf8(info.name.to_vec())
+                .expect(&format!("Failed to get name for lump {:?}", info));
+            if lump_names.contains(&lump_name) {
+                continue;
+            }
+            lump_names.push(lump_name);
             lumps.push(parse_lump(&file, info));
         }
 

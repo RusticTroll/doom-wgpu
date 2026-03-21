@@ -32,7 +32,10 @@ impl Music {
         }
 
         let mut sf2 = File::open("soundfont.sf2").expect("Failed to open soundfont.sf2");
-        let soundfont = Arc::new(SoundFont::new(&mut sf2).expect("Failed to load SoundFont"));
+        let soundfont = Arc::new(
+            SoundFont::new(&mut sf2)
+                .expect("Successfully opened soundfont.sf2, but failed to load SoundFont"),
+        );
         let mut synth = Synthesizer::new(&soundfont, &SynthesizerSettings::new(44100))
             .expect("Failed to create Synthesizer");
 
@@ -46,8 +49,8 @@ impl Music {
             // Parse events until we get a delay
             // Once we reach a delay, render the waveform for `delay` ticks worth of samples
             if let Some(delay) = parse_mus_event(&mut synth, &mut last_velocity, &mut events) {
-                let mut left_samples_for_tick = vec![0_f32; (SAMPLES_PER_TICK * delay)];
-                let mut right_samples_for_tick = vec![0_f32; (SAMPLES_PER_TICK * delay)];
+                let mut left_samples_for_tick = vec![0_f32; SAMPLES_PER_TICK * delay];
+                let mut right_samples_for_tick = vec![0_f32; SAMPLES_PER_TICK * delay];
                 synth.render(&mut left_samples_for_tick, &mut right_samples_for_tick);
 
                 left_samples.append(&mut left_samples_for_tick);
@@ -55,8 +58,14 @@ impl Music {
             }
         }
 
+        let interleaved_samples = left_samples
+            .iter()
+            .zip(right_samples.iter())
+            .flat_map(|(&left, &right)| [left, right])
+            .collect::<Vec<_>>();
+
         Self {
-            sample_buffer: SamplesBuffer::new(nz!(1), nz!(44100), left_samples),
+            sample_buffer: SamplesBuffer::new(nz!(2), nz!(44100), interleaved_samples),
         }
     }
 }
@@ -75,12 +84,18 @@ pub fn parse_mus_event(
         .expect("Tried to parse MUS event, but there were no bytes left");
     let delay_present = event_head & 0x80 != 0;
     let event_type = (event_head & 0x70) >> 4;
-    let channel = (event_head & 0x0F) as i32;
+    let mut channel = (event_head & 0x0F) as i32;
 
     // println!(
     //     "Event head: {:#X}\n\tDelay: {}\n\tType: {}\n\tChannel: {}",
     //     *event_head, delay_present, event_type, channel
     // );
+
+    if channel == 15 {
+        channel = 9;
+    } else if channel >= 9 {
+        channel += 1;
+    }
 
     match event_type {
         // Release Note
@@ -105,8 +120,8 @@ pub fn parse_mus_event(
                 let velocity = bytes.pop_front().expect(
                     "Tried to parse Play Note event's velocity, but there were no bytes left",
                 );
-                synth.note_on(channel, (event & 0x7F) as i32, *velocity as i32);
-                last_velocity[channel as usize] = *velocity as i32;
+                synth.note_on(channel, (event & 0x7F) as i32, (velocity & 0x7F) as i32);
+                last_velocity[channel as usize] = (velocity & 0x7F) as i32;
             }
         },
         // Pitch Bend
