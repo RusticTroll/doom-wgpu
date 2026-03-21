@@ -567,6 +567,7 @@ dependencies = [
  "env_logger",
  "flagset",
  "pollster",
+ "regex",
  "rodio",
  "rustysynth",
  "wgpu",

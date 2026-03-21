@@ -1,6 +1,11 @@
 use super::patch::Patch;
 use crate::wad::{Demo, Sound};
 use bytemuck::{Pod, Zeroable};
+use regex::Regex;
+use std::sync::LazyLock;
+
+static MAP_NAME_REGEX: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^(?:MAP\d\d|E\dM\d)$").unwrap());
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
@@ -51,8 +56,12 @@ impl Wad {
             if lump_names.contains(&lump_name) {
                 continue;
             }
+            if MAP_NAME_REGEX.is_match(&lump_name) {
+                // Parse MAP
+            } else {
+                lumps.push(parse_lump(&file, info));
+            }
             lump_names.push(lump_name);
-            lumps.push(parse_lump(&file, info));
         }
 
         Self { lumps, lump_names }
