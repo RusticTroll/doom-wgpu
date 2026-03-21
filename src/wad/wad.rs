@@ -1,5 +1,5 @@
 use super::patch::Patch;
-use crate::wad::{Demo, Music, Sound};
+use crate::wad::{Demo, Sound};
 use bytemuck::{Pod, Zeroable};
 
 #[repr(C)]
@@ -14,7 +14,7 @@ struct LumpInfo {
 pub enum Lump {
     ColorMap(Vec<[u8; 256]>),
     Demo(Demo),
-    Music(Music),
+    Music(Vec<u8>),
     Palette(Vec<[[u8; 3]; 256]>),
     Patch(Patch),
     Sound(Sound),
@@ -98,7 +98,7 @@ impl Wad {
         }
     }
 
-    pub fn get_music(&self, name: &str) -> &Music {
+    pub fn get_music(&self, name: &str) -> &Vec<u8> {
         let music_lump_index = self
             .lump_names
             .iter()
@@ -107,7 +107,7 @@ impl Wad {
         match &self.lumps[music_lump_index] {
             Lump::Music(music) => music,
             other => panic!(
-                "Lump {} was expected to be a music but is a {}",
+                "Lump {} was expected to be music but is a {}",
                 name,
                 std::any::type_name_of_val(other)
             ),
@@ -146,8 +146,7 @@ fn parse_lump(file: &Vec<u8>, info: &LumpInfo) -> Lump {
     }
 
     if info.name.starts_with(b"D_") {
-        println!("Parsing {}", String::from_utf8(info.name.to_vec()).unwrap());
-        return Lump::Music(Music::new(data));
+        return Lump::Music(data.to_vec());
     }
 
     Lump::Unknown
