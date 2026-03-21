@@ -1,8 +1,7 @@
-use super::patch::Patch;
-use crate::wad::{Demo, Sound};
+use super::{Demo, Map, Patch, Sound};
 use bytemuck::{Pod, Zeroable};
 use regex::Regex;
-use std::sync::LazyLock;
+use std::{collections::VecDeque, sync::LazyLock};
 
 static MAP_NAME_REGEX: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(?:MAP\d\d|E\dM\d)$").unwrap());
@@ -19,6 +18,7 @@ struct LumpInfo {
 pub enum Lump {
     ColorMap(Vec<[u8; 256]>),
     Demo(Demo),
+    Map(Map),
     Music(Vec<u8>),
     Palette(Vec<[[u8; 3]; 256]>),
     Patch(Patch),
@@ -45,24 +45,33 @@ impl Wad {
 
         let num_lumps: i32 = *bytemuck::from_bytes(&file[4..8]);
         let info_table_offset: i32 = *bytemuck::from_bytes(&file[8..12]);
-        let all_lump_info: &[LumpInfo] = bytemuck::cast_slice(&file[info_table_offset as usize..]);
+        let mut all_lump_info = VecDeque::<LumpInfo>::with_capacity(num_lumps as usize);
+        all_lump_info.extend(bytemuck::cast_slice(&file[info_table_offset as usize..]));
 
         let mut lump_names = Vec::with_capacity(num_lumps as usize);
         let mut lumps = Vec::with_capacity(num_lumps as usize);
 
-        for info in all_lump_info {
+        while let Some(info) = all_lump_info.pop_front() {
             let lump_name = String::from_utf8(info.name.to_vec())
                 .expect(&format!("Failed to get name for lump {:?}", info));
             if lump_names.contains(&lump_name) {
                 continue;
             }
             if MAP_NAME_REGEX.is_match(&lump_name) {
-                // Parse MAP
+                let things_info = all_lump_info
+                    .pop_front()
+                    .expect("No THINGS lump found after map marker");
+                let things_data = &file[things_info.file_position as usize
+                    ..(things_info.file_position + things_info.size) as usize];
+
+                lumps.push(Lump::Map(Map::new(things_data)));
             } else {
-                lumps.push(parse_lump(&file, info));
+                lumps.push(parse_lump(&file, &info));
             }
             lump_names.push(lump_name);
         }
+
+        for info in all_lump_info {}
 
         Self { lumps, lump_names }
     }
