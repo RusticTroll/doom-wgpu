@@ -8,7 +8,7 @@ static MAP_NAME_REGEX: LazyLock<Regex> =
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
-struct LumpInfo {
+pub(super) struct LumpInfo {
     pub file_position: i32,
     pub size: i32,
     pub name: [u8; 8],
@@ -58,20 +58,12 @@ impl Wad {
                 continue;
             }
             if MAP_NAME_REGEX.is_match(&lump_name) {
-                let things_info = all_lump_info
-                    .pop_front()
-                    .expect("No THINGS lump found after map marker");
-                let things_data = &file[things_info.file_position as usize
-                    ..(things_info.file_position + things_info.size) as usize];
-
-                lumps.push(Lump::Map(Map::new(things_data)));
+                lumps.push(Lump::Map(Map::new(&file, &mut all_lump_info)));
             } else {
                 lumps.push(parse_lump(&file, &info));
             }
             lump_names.push(lump_name);
         }
-
-        for info in all_lump_info {}
 
         Self { lumps, lump_names }
     }
