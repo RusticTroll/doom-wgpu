@@ -4,7 +4,7 @@ use regex::Regex;
 use std::{collections::VecDeque, sync::LazyLock};
 
 static MAP_NAME_REGEX: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"^(?:MAP\d\d|E\dM\d)$").unwrap());
+    LazyLock::new(|| Regex::new(r"^(?:MAP\d\d|E\dM\d)").unwrap());
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
@@ -58,7 +58,9 @@ impl Wad {
                 continue;
             }
             if MAP_NAME_REGEX.is_match(&lump_name) {
-                lumps.push(Lump::Map(Map::new(&file, &mut all_lump_info)));
+                let map = Map::new(&file, &mut all_lump_info);
+                println!("{:#?}", map);
+                lumps.push(Lump::Map(map));
             } else {
                 lumps.push(parse_lump(&file, &info));
             }

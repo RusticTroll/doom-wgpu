@@ -27,9 +27,9 @@ fn get_and_check_map_lump(all_lump_info: &mut VecDeque<LumpInfo>, expected_name:
         expected_name
     ));
 
-    if lump_info.name.starts_with(expected_name.as_bytes()) {
+    if !lump_info.name.starts_with(expected_name.as_bytes()) {
         panic!(
-            "Expected {} lump, but for lump of type {}",
+            "Expected {} lump, but found lump of type {}",
             expected_name,
             String::from_utf8(lump_info.name.to_vec()).unwrap(),
         );
