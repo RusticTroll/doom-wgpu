@@ -1,22 +1,27 @@
+mod linedef;
 mod thing;
 
-use bytemuck::{Pod, Zeroable};
+pub use linedef::*;
 pub use thing::*;
 
 use super::LumpInfo;
+use bytemuck::{Pod, Zeroable};
 use std::collections::VecDeque;
 
 #[derive(Debug)]
 pub struct Map {
     pub things: Vec<MapThing>,
+    pub linedefs: Vec<LineDef>,
 }
 
 impl Map {
-    pub fn new(file: &[u8], all_lump_info: &mut VecDeque<LumpInfo>) -> Self {
+    pub(super) fn new(file: &[u8], all_lump_info: &mut VecDeque<LumpInfo>) -> Self {
         let things_info = get_and_check_map_lump(all_lump_info, "THINGS");
+        let linedefs_info = get_and_check_map_lump(all_lump_info, "LINEDEFS");
 
         Self {
             things: get_map_data(file, things_info),
+            linedefs: get_map_data(file, linedefs_info),
         }
     }
 }
