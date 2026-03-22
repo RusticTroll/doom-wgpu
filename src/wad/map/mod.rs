@@ -45,7 +45,7 @@ where
     let start_offset = lump_info.file_position as usize;
     let end_offset = start_offset + lump_info.size as usize;
 
-    let data = &file[start_offset..end_offset];
+    let data = &file[start_offset..end_offset].to_vec();
 
     bytemuck::cast_slice(data).to_vec()
 }
