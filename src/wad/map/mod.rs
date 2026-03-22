@@ -1,7 +1,9 @@
 mod linedef;
+mod sidedef;
 mod thing;
 
 pub use linedef::*;
+pub use sidedef::*;
 pub use thing::*;
 
 use super::LumpInfo;
@@ -12,16 +14,19 @@ use std::collections::VecDeque;
 pub struct Map {
     pub things: Vec<MapThing>,
     pub linedefs: Vec<LineDef>,
+    pub sidedefs: Vec<SideDef>,
 }
 
 impl Map {
     pub(super) fn new(file: &[u8], all_lump_info: &mut VecDeque<LumpInfo>) -> Self {
         let things_info = get_and_check_map_lump(all_lump_info, "THINGS");
         let linedefs_info = get_and_check_map_lump(all_lump_info, "LINEDEFS");
+        let sidedefs_info = get_and_check_map_lump(all_lump_info, "SIDEDEFS");
 
         Self {
             things: get_map_data(file, things_info),
             linedefs: get_map_data(file, linedefs_info),
+            sidedefs: get_map_data(file, sidedefs_info),
         }
     }
 }
