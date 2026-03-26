@@ -1,0 +1,3 @@
+[submodule "src/ajbsp"]
+	path = src/ajbsp
+	url = https://github.com/RusticTroll/ajbsp.git
