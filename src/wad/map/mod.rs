@@ -4,6 +4,7 @@ mod sidedef;
 mod thing;
 mod vertex;
 
+pub mod ajbsp;
 pub use linedef::*;
 pub use segment::*;
 pub use sidedef::*;

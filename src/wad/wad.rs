@@ -1,4 +1,4 @@
-use super::{Demo, Map, Patch, Sound};
+use super::{Demo, Map, Patch, Sound, ajbsp};
 use bytemuck::{Pod, Zeroable};
 use regex::Regex;
 use std::{collections::VecDeque, sync::LazyLock};
@@ -36,6 +36,19 @@ pub struct Wad {
 
 impl Wad {
     pub fn load(file_name: &str) -> Self {
+        let mut info = ajbsp::buildinfo_t::new();
+        println!("{:#?}", info);
+        ajbsp::set_info(&mut info);
+        ajbsp::open_wad(file_name);
+        ajbsp::create_xwa("temp.xwa");
+        let level_count = ajbsp::levels_in_wad();
+        println!("Level Count: {}", level_count);
+        for index in 0..level_count {
+            ajbsp::build_level(index).unwrap();
+        }
+        ajbsp::finish_xwa();
+        ajbsp::close_wad();
+
         let file =
             std::fs::read(file_name).expect(&format!("Failed to read file from '{}'", file_name));
 
@@ -59,7 +72,6 @@ impl Wad {
             }
             if MAP_NAME_REGEX.is_match(&lump_name) {
                 let map = Map::new(&file, &mut all_lump_info);
-                println!("{:#?}", map);
                 lumps.push(Lump::Map(map));
             } else {
                 lumps.push(parse_lump(&file, &info));
