@@ -24,7 +24,7 @@ pub struct PalettizedTexture {
 }
 
 impl PalettizedTexture {
-    pub fn new(name: &str, patch: Patch, device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
+    pub fn new(name: &str, patch: &Patch, device: &wgpu::Device, queue: &wgpu::Queue) -> Self {
         let size = wgpu::Extent3d {
             width: patch.width,
             height: patch.height,

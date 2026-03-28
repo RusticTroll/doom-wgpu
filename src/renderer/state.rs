@@ -108,12 +108,8 @@ impl RenderState {
 
         let palette = texture::Palette::new(wad.get_palette(), wad.get_colormap(), &device, &queue);
 
-        let texture = texture::PalettizedTexture::new(
-            "Title",
-            Patch::new(&load_binary("TITLEPIC.lmp")),
-            &device,
-            &queue,
-        );
+        let texture =
+            texture::PalettizedTexture::new("Title", wad.get_patch("TITLEPIC"), &device, &queue);
 
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
