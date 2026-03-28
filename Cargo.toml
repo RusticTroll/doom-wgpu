@@ -8,6 +8,7 @@ anyhow = "1.0.102"
 bytemuck = { version = "1.25.0", features = ["derive"] }
 dasp_sample = "0.11.0"
 env_logger = "0.11.9"
+fixed = "1.31.0"
 flagset = "0.4.7"
 pollster = "0.4.0"
 regex = "1.12.3"
