@@ -62,35 +62,35 @@ pub const build_result_e_BUILD_LumpOverflow: build_result_e = 2;
 pub type build_result_e = ::std::os::raw::c_uint;
 unsafe extern "C" {
     #[link_name = "\u{1}SetInfo"]
-    pub fn ajbsp_SetInfo(info: *mut buildinfo_t);
+    fn ajbsp_SetInfo(info: *mut buildinfo_t);
 }
 unsafe extern "C" {
     #[link_name = "\u{1}OpenWad"]
-    pub fn ajbsp_OpenWad(filename: *const ::std::os::raw::c_char);
+    fn ajbsp_OpenWad(filename: *const ::std::os::raw::c_char);
 }
 unsafe extern "C" {
     #[link_name = "\u{1}CloseWad"]
-    pub fn ajbsp_CloseWad();
+    fn ajbsp_CloseWad();
 }
 unsafe extern "C" {
     #[link_name = "\u{1}CreateXWA"]
-    pub fn ajbsp_CreateXWA(filename: *const ::std::os::raw::c_char);
+    fn ajbsp_CreateXWA(filename: *const ::std::os::raw::c_char);
 }
 unsafe extern "C" {
     #[link_name = "\u{1}FinishXWA"]
-    pub fn ajbsp_FinishXWA();
+    fn ajbsp_FinishXWA();
 }
 unsafe extern "C" {
     #[link_name = "\u{1}LevelsInWad"]
-    pub fn ajbsp_LevelsInWad() -> ::std::os::raw::c_int;
+    fn ajbsp_LevelsInWad() -> ::std::os::raw::c_int;
 }
 unsafe extern "C" {
     #[link_name = "\u{1}GetLevelName"]
-    pub fn ajbsp_GetLevelName(lev_idx: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
+    fn ajbsp_GetLevelName(lev_idx: ::std::os::raw::c_int) -> *const ::std::os::raw::c_char;
 }
 unsafe extern "C" {
     #[link_name = "\u{1}BuildLevel"]
-    pub fn ajbsp_BuildLevel(lev_idx: ::std::os::raw::c_int) -> build_result_e;
+    fn ajbsp_BuildLevel(lev_idx: ::std::os::raw::c_int) -> build_result_e;
 }
 
 // buildinfo_t dummy virtual function
