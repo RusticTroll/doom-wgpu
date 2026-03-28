@@ -180,6 +180,10 @@ pub fn get_level_name(level_idx: i32) -> String {
     unsafe {
         let mut ptr = ajbsp_GetLevelName(level_idx);
 
+        if ptr.is_null() {
+            return String::new();
+        }
+
         let mut name = String::new();
         while *ptr != 0 {
             name.push(*ptr as u8 as char);
